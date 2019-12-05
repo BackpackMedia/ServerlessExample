@@ -1,3 +1,5 @@
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/catch-or-return */
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 admin.initializeApp()
@@ -22,6 +24,17 @@ exports.addComment = functions.https.onRequest(async(request, response) => {
 
 //R - Read
 //kinda useless for this but I'm going to write it anyway
+exports.readComments = functions.https.onRequest(async(request, response) => {
+    var items = []
+    //loop thru snapshots>grab children value>push to items
+    admin.database().ref().on('value', snap => {
+        snap.forEach(child => {
+            items.push(child.val())
+        })
+    })
+    //print items
+    response.send(items)
+})
 
 /*
     U - Update
@@ -31,21 +44,27 @@ exports.addComment = functions.https.onRequest(async(request, response) => {
 
 exports.updateComment = functions.https.onRequest(async(request, response) => {
     //get query params
-    og_msg = request.query.old
-    new_msg = request.query.new
-    var key = ''
-    var path = admin.database().ref()
-    //search db for old
-    // eslint-disable-next-line promise/catch-or-return
-    // eslint-disable-next-line promise/always-return
-    path.once("value").then(snap => {
-        snap.forEach(child => {
-        if(child.val() === og_msg) //check to see if the value is equal to the og text
-            key = child.key
-        })
-    })
-    snap = await admin.database().ref().child(key).update(new_msg)
-    response.redirect(303, snap.ref.toString()) //this is ok for now so we can see change
+    // og_msg = request.query.old
+    // new_msg = request.query.new
+    // var key = ''
+    // var path = admin.database().ref()
+    // //search db for old
+    // path.once("value").then(snap => {
+    //     snap.forEach(child => {
+    //     if(child.val() === og_msg) //check to see if the value is equal to the og text
+    //         key = child.key
+    //     })
+    // })
+    // snap = await admin.database().ref().child(key).update(new_msg)
+    // response.redirect(303, snap.ref.toString())
+    esponse.send("i mean...I'm broken");
 })
-//D - Delete
-//Allow user to delete a word
+
+/*
+    D - Delete
+    Allow user to delete a word
+*/
+
+exports.deleteComment = functions.https.onRequest(async(request, response) => {
+    response.send("This is the delete endpoint genius");
+})
