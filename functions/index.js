@@ -16,7 +16,7 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
 */
 exports.addComment = functions.https.onRequest(async(request, response) => {
     word = request.query.text
-    snap = await admin.database().ref().push(word)
+    snap = await admin.database().ref('/Words').push(word)
     response.send("Word Added!")
 })
 
@@ -28,7 +28,7 @@ exports.addComment = functions.https.onRequest(async(request, response) => {
 exports.readComments = functions.https.onRequest(async(request, response) => {
     var items = []
     //loop thru snapshots>grab children value>push to items
-    admin.database().ref().on('value', snap => {
+    admin.database().ref('/Words').on('value', snap => {
         snap.forEach(child => {
             items.push(child.val())
         })
@@ -47,7 +47,7 @@ exports.updateComment = functions.https.onRequest(async(request, response) => {
     new_word = request.query.new
     var key = null
     //search db for old
-    admin.database().ref().on('value', snap => {
+    admin.database().ref('/Words').on('value', snap => {
         snap.forEach(child => {
         if(child.val() === og_word) //check to see if the value is equal to the og text
             key = child.key
@@ -55,8 +55,8 @@ exports.updateComment = functions.https.onRequest(async(request, response) => {
     })
     //on successful key
     if(key !== null){
-        snap = await admin.database().ref().child(key).update(new_word)
-        response.redirect(303, snap.ref.toString())
+        snap = await admin.database().ref('/Words').child(key).set(new_word)
+        response.send("Word Updated!")
     } else { //word not in the database
         response.send("Word not found.")
     }
@@ -71,14 +71,14 @@ exports.deleteComment = functions.https.onRequest(async(request, response) => {
     word = request.query.text
     var key = null
     //loop thru snapshots>compare child value to word>if item exist delete it
-    admin.database().ref().on('value', snap => {
+    admin.database().ref('/Words').on('value', snap => {
         snap.forEach(child => {
         if(child.val() === word)
             key = child.key
         })
     })
     if(key !== null){
-        snap = await admin.database().ref().child(key).remove()
+        snap = await admin.database().ref('/Words').child(key).remove()
         response.send("Word Deleted!")
     } else { //word not in the database
         response.send("Word not found.")
