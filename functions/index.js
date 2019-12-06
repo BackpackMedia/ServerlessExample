@@ -1,5 +1,3 @@
-/* eslint-disable promise/always-return */
-/* eslint-disable promise/catch-or-return */
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 admin.initializeApp()
@@ -17,13 +15,16 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
     Endpoint: /addComment?text=
 */
 exports.addComment = functions.https.onRequest(async(request, response) => {
-    message = request.query.text
-    snap = await admin.database().ref().push(message)
-    response.send(snap.ref.toString())
+    word = request.query.text
+    snap = await admin.database().ref().push(word)
+    response.send("Word Added!")
 })
 
-//R - Read
-//kinda useless for this but I'm going to write it anyway
+/*
+    R - Read
+    kinda useless for this but I'm going to write it anyway
+    Endpoint: /readComments
+*/
 exports.readComments = functions.https.onRequest(async(request, response) => {
     var items = []
     //loop thru snapshots>grab children value>push to items
@@ -32,7 +33,6 @@ exports.readComments = functions.https.onRequest(async(request, response) => {
             items.push(child.val())
         })
     })
-    //print items
     response.send(items)
 })
 
@@ -41,30 +41,46 @@ exports.readComments = functions.https.onRequest(async(request, response) => {
     When user give a word we update it with another word
     Endpoint: /updateComment?old=&new=
 */
-
+//TODO: Fix the foolishness
 exports.updateComment = functions.https.onRequest(async(request, response) => {
-    //get query params
-    // og_msg = request.query.old
-    // new_msg = request.query.new
-    // var key = ''
-    // var path = admin.database().ref()
-    // //search db for old
-    // path.once("value").then(snap => {
-    //     snap.forEach(child => {
-    //     if(child.val() === og_msg) //check to see if the value is equal to the og text
-    //         key = child.key
-    //     })
-    // })
-    // snap = await admin.database().ref().child(key).update(new_msg)
-    // response.redirect(303, snap.ref.toString())
-    esponse.send("i mean...I'm broken");
+    og_word = request.query.old
+    new_word = request.query.new
+    var key = null
+    //search db for old
+    admin.database().ref().on('value', snap => {
+        snap.forEach(child => {
+        if(child.val() === og_word) //check to see if the value is equal to the og text
+            key = child.key
+        })
+    })
+    //on successful key
+    if(key !== null){
+        snap = await admin.database().ref().child(key).update(new_word)
+        response.redirect(303, snap.ref.toString())
+    } else { //word not in the database
+        response.send("Word not found.")
+    }
 })
 
 /*
     D - Delete
     Allow user to delete a word
+    Endpoint: /deleteComment?text=
 */
-
 exports.deleteComment = functions.https.onRequest(async(request, response) => {
-    response.send("This is the delete endpoint genius");
+    word = request.query.text
+    var key = null
+    //loop thru snapshots>compare child value to word>if item exist delete it
+    admin.database().ref().on('value', snap => {
+        snap.forEach(child => {
+        if(child.val() === word)
+            key = child.key
+        })
+    })
+    if(key !== null){
+        snap = await admin.database().ref().child(key).remove()
+        response.send("Word Deleted!")
+    } else { //word not in the database
+        response.send("Word not found.")
+    }
 })
